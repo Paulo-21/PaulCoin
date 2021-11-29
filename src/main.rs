@@ -15,12 +15,12 @@ enum Commande {
     }
 }
 mod server;
-async fn receive() {
+async fn receive_loop(tx : mpsc::Sender<Commande>) {
     loop {
 
     }
 }
-async fn stream(stream : TcpStream, mut rx : mpsc::Receiver<Commande>) {
+async fn stream_main(stream : TcpStream, mut rx_mpsc_receive_loop : mpsc::Receiver<Commande>, rx_watch_manager : watch::Receiver<Commande>, tx_mpsc_manager: watch::Receiver<Commande>) {
     while let Some(cmd) = rx.recv().await {
         use Commande::*;
         match cmd {
@@ -68,6 +68,15 @@ async fn manager ( mut rx_server: mpsc::Receiver<Commande> , mut tx_streams : wa
             }
         }*/
     }
+}
+async fn process_stream (stream : TcpStream, tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
+    let (tx, rx_mpsc_receive_loop) = mpsc::channel(20); //Receiver loop and stream_main
+    tokio::spawn(async move {
+        stream_main(stream, rx_mpsc_receive_loop, tx_mpsc_manager, rx_watch_manager).await;
+    });
+    tokio::spawn( async move {
+        receive_loop(tx).await;
+    });
 }
 async fn start_client(mut ip : String, tx  : mpsc::Sender<TcpStream>) {
     ip.push_str(":80");
