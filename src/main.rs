@@ -87,7 +87,7 @@ async fn manager ( mut rx_server: mpsc::Receiver<Commande> , mut tx_watch : watc
     }
 }
 
-async fn process_new_connection (mut stream : TcpStream, tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
+async fn process_new_connection (stream : TcpStream, tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
     let (reader, writer) = stream.into_split();
     let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
     tokio::spawn(async move {
