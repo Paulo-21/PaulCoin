@@ -1,10 +1,9 @@
 use tokio::net::{TcpListener, TcpStream, tcp::OwnedReadHalf, tcp::OwnedWriteHalf};
 use std::fs::File;
 use std::io::prelude::*;
-use std::collections::HashMap;
 use tokio::sync::{mpsc, watch };
 
-use std::net::SocketAddr;
+//use std::net::SocketAddr;
 
 enum Commande {
     Send {
@@ -87,9 +86,8 @@ async fn main() {
     //let mut client_spanw = Vec::new();
     
     /*for ip in clients {
-        let tx2 = tx.clone();
         let a = String::from(ip).clone();
-        client_spanw.push( tokio::spawn(start_client(a, tx2)));
+        client_spanw.push( tokio::spawn(start_client(a)));
     }*/
     let server = tokio::spawn(start_server(tx_mpsc_manager, rx_watch) );
     server.await.unwrap();
@@ -100,7 +98,7 @@ async fn main() {
     
 }
 
-async fn start_client(mut ip : String, tx  : mpsc::Sender<TcpStream>) {
+async fn start_client(mut ip : String) {
     ip.push_str(":80");
     let stream = TcpStream::connect(&ip[..]).await;
     match stream {
@@ -113,7 +111,7 @@ async fn start_client(mut ip : String, tx  : mpsc::Sender<TcpStream>) {
                     Err(_e) => { continue; }
                 }
             }*/
-            tx.send(c).await.unwrap();
+            
         }
         Err(err) => { println!("{}", err); }
     }
