@@ -16,10 +16,10 @@ enum Commande {
 }
 mod server;
 
-async fn stream_reader(stream : OwnedReadHalf) {
+async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Commande>) {
 
 }
-async fn stream_writer(stream : OwnedWriteHalf) {
+async fn stream_writer(stream : OwnedWriteHalf, rx_watch_manager: watch::Receiver<Commande>) {
 
 }
 
@@ -39,21 +39,20 @@ async fn manager ( mut rx_server: mpsc::Receiver<Commande> , mut tx_streams : wa
         }*/
     }
 }
-async fn process_new_connection (mut stream : TcpStream, tx_mpsc_manager: mpsc::Sender<Commande>) {
+async fn process_new_connection (mut stream : TcpStream, tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
     let (tx, rx_mpsc_receive_loop) : (mpsc::Sender<Commande>, mpsc::Receiver<Commande>) = mpsc::channel(20);
     let (reader, writer) = stream.into_split();
+    let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
     tokio::spawn(async move {
-        stream_writer(writer).await;
+        stream_writer(writer, rx_watch_manager).await;
     });
     tokio::spawn( async move {
-        stream_reader(reader).await;
+        stream_reader(reader, tx_mpsc_manager_clone).await;
     });
     tx_mpsc_manager.send(Commande::Send{value: String::from("ADD")});
 }
 
-
-
-async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>) {
+async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
     let listener = TcpListener::bind("0.0.0.0:80").await;
     match listener {
         Ok(listen) => {
@@ -61,8 +60,9 @@ async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>) {
             loop {
                 let (socket, _) = listen.accept().await.unwrap();
                 let tx_mpsc_manager_clone =  tx_mpsc_manager.clone();
+                let rx_watch_manager_clone = rx_watch_manager.clone();
                 tokio::spawn(async {
-                    process_new_connection(socket, tx_mpsc_manager_clone).await;
+                    process_new_connection(socket, tx_mpsc_manager_clone, rx_watch_manager_clone).await;
                 });
             }
         }
@@ -91,7 +91,7 @@ async fn main() {
         let a = String::from(ip).clone();
         client_spanw.push( tokio::spawn(start_client(a, tx2)));
     }*/
-    let server = tokio::spawn(start_server(tx_mpsc_manager) );
+    let server = tokio::spawn(start_server(tx_mpsc_manager, rx_watch) );
     server.await.unwrap();
     /*for x in client_spanw {
         x.await;
