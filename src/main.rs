@@ -2,7 +2,6 @@ use tokio::net::{TcpListener, TcpStream, tcp::OwnedReadHalf, tcp::OwnedWriteHalf
 use std::fs::File;
 use std::io::prelude::*;
 use tokio::sync::{mpsc, watch };
-
 //use std::net::SocketAddr;
 
 #[derive(Debug, Clone)]
@@ -16,7 +15,7 @@ enum Commande {
 }
 mod server;
 
-async fn stream_reader(stream : OwnedReadHalf, mut tx_mpsc_manager: mpsc::Sender<Commande>) {
+async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Commande>) {
     loop {
         let mut msg = vec![0;1024];
         stream.readable().await;
@@ -119,11 +118,9 @@ async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager:
             println!("{}", err);
         }
     }
-    
 }
 #[tokio::main]
 async fn main() {
-    
     let (tx_watch ,  rx_watch) : (watch::Sender<Commande>, watch::Receiver<Commande>) = watch::channel(Commande::Send{value:String::from("Bonjour")});
     let (tx_mpsc_manager ,  rx_mpsc_manager) : (mpsc::Sender<Commande>, mpsc::Receiver<Commande>) = mpsc::channel(32);
     let mut file = File::open("votant.txt").unwrap();
@@ -135,7 +132,6 @@ async fn main() {
     let _manager = tokio::spawn(async move{
         manager(rx_mpsc_manager, tx_watch).await;
     });
-    //let mut client_spanw = Vec::new();
     
     for ip in clients {
         let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
@@ -147,11 +143,7 @@ async fn main() {
     }
     let server = tokio::spawn(start_server(tx_mpsc_manager, rx_watch) );
     server.await.unwrap();
-    /*for x in client_spanw {
-        x.await;
-    }*/
     _manager.await;
-    
 }
 
 async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
