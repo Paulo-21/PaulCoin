@@ -22,17 +22,21 @@ async fn stream_reader(stream : OwnedReadHalf, mut tx_mpsc_manager: mpsc::Sender
         stream.readable().await;
 
         match stream.try_read(&mut msg) {
+            Ok(0) => { 
+                println!("connection close");
+                break; 
+            }
             Ok(n) => {
+                /*if stream.local_addr().is_ok() {
+                    continue;
+                }*/
                 msg.truncate(n);
                 let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
                 tokio::spawn(async move { 
                     process_receive(msg, tx_mpsc_manager_clone).await; 
                 });
             }
-            Ok(0) => { 
-                println!("connection close");
-                break; 
-            }
+            
             Err(e) => {
                 continue;
             }
@@ -69,12 +73,13 @@ async fn process_receive(msg : Vec<u8>, tx_mpsc_manager : mpsc::Sender<Commande>
     tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
     
 }
-async fn manager ( mut rx_server: mpsc::Receiver<Commande> , mut tx_streams : watch::Sender<Commande>) {
+async fn manager ( mut rx_server: mpsc::Receiver<Commande> , mut tx_watch : watch::Sender<Commande>) {
     while let Some(cmd) = rx_server.recv().await {
         use Commande::*;
         match cmd {
             Send { value } => {
                 println!("Manager Receive : {}", value);
+                tx_watch.send(Send { value : value});
             }
             _ => {
                 continue;
