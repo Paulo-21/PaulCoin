@@ -29,6 +29,10 @@ async fn stream_reader(stream : OwnedReadHalf, mut tx_mpsc_manager: mpsc::Sender
                     process_receive(msg, tx_mpsc_manager_clone).await; 
                 });
             }
+            Ok(0) => { 
+                println!("connection close");
+                break; 
+            }
             Err(e) => {
                 continue;
             }
@@ -78,6 +82,7 @@ async fn manager ( mut rx_server: mpsc::Receiver<Commande> , mut tx_streams : wa
         }
     }
 }
+
 async fn process_new_connection (mut stream : TcpStream, tx_mpsc_manager: mpsc::Sender<Commande>, rx_watch_manager: watch::Receiver<Commande>) {
     let (reader, writer) = stream.into_split();
     let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
@@ -158,23 +163,4 @@ async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Commande>,
         Err(err) => { println!("{}", err); }
     }
     println!("client destroyed");
-}
-
-pub async fn process(stream: TcpStream) {
-
-    let mut msg = vec![0;1024];
-    loop {
-        stream.readable().await;
-
-        match stream.try_read(&mut msg) {
-            Ok(n) => {
-                msg.truncate(n);
-                break;
-            }
-            Err(e) => {
-                continue;
-            }
-        }
-    }
-    println!("Receive = {:?}", msg);
 }
