@@ -25,12 +25,14 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
                     stream.writable().await;
                     match stream.try_write(value.as_bytes()) {
                         Ok(n) => {
+                            //println!("Writer {}", n);
                             break;
                         }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
                             continue;
                         }
                         Err(e) => {
+                            println!("{}", e);
                             return;
                         }
                     }
@@ -51,17 +53,18 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
             Ok(0) => { 
                 println!("connection close");
                 break;
-            }
+            },
             Ok(n) => {
                 msg.truncate(n);
                 let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
                 tokio::spawn(async move { 
                     process_receive(msg, tx_mpsc_manager_clone).await; 
                 });
-            }
-            
+            },
             Err(e) => {
-                return;
+                println!("{}", e);
+                break;
+                //return;
             }
         }
     }
