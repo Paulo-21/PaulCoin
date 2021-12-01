@@ -50,17 +50,22 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
         stream.readable().await;
 
         match stream.try_read(&mut msg) {
-            Ok(0) => { 
+            Ok(0) => {
                 println!("connection close");
                 break;
             },
             Ok(n) => {
                 msg.truncate(n);
+                println!("read {} bytes", n);
                 let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
                 tokio::spawn(async move { 
                     process_receive(msg, tx_mpsc_manager_clone).await; 
                 });
             },
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+                println!("BLOCKED READER");
+                continue;
+            }
             Err(e) => {
                 println!("{}", e);
                 break;
@@ -83,7 +88,8 @@ async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
         match cmd {
             Send { value } => {
                 for tx in &writers {
-                    tx.send(Commande::Send{value : value.clone()}).await;
+                    let v = value.clone();
+                    tx.send(Commande::Send{value : v}).await;
                 }
             },
             AddStream { writer_stream } => {
