@@ -61,7 +61,7 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
             }
             
             Err(e) => {
-                continue;
+                return;
             }
         }
     }
