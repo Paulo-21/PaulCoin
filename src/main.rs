@@ -51,7 +51,7 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
 
         match stream.try_read(&mut msg) {
             Ok(0) => {
-                println!("connection close");
+                println!("connection close from {}", stream.peer_addr().unwrap());
                 break;
             },
             Ok(n) => {
