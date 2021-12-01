@@ -31,7 +31,7 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
                             continue;
                         }
                         Err(e) => {
-                            break;
+                            return;
                         }
                     }
                 }
