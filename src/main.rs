@@ -56,18 +56,18 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
             },
             Ok(n) => {
                 msg.truncate(n);
-                println!("read {} bytes", n);
+                //println!("read {} bytes", n);
                 let tx_mpsc_manager_clone = tx_mpsc_manager.clone();
                 tokio::spawn(async move { 
                     process_receive(msg, tx_mpsc_manager_clone).await; 
                 });
             },
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-                println!("BLOCKED READER");
+                //println!("BLOCKED READER");
                 continue;
             }
             Err(e) => {
-                println!("{}", e);
+                //println!("{}", e);
                 break;
                 //return;
             }
