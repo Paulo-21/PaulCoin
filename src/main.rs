@@ -164,7 +164,8 @@ async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Commande>)
     ip.push_str(":80");
     match TcpStream::connect(&ip[..]).await {
         Ok(stream) => {
-            if stream.local_addr().unwrap() == stream.peer_addr().unwrap() {
+            println!("{}, {}", stream.local_addr().unwrap().ip() , stream.peer_addr().unwrap().ip() );
+            if stream.local_addr().unwrap().ip() == stream.peer_addr().unwrap().ip() {
                 return;
             }
             println!("Connected : {}", ip);
