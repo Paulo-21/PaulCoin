@@ -15,7 +15,6 @@ enum Commande {
     }
     
 }
-mod server;
 async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande>) {
     while let Some(cmd) = rx.recv().await {
         use Commande::*;
