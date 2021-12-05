@@ -156,7 +156,7 @@ async fn main() {
     }
     let server = tokio::spawn(start_server(tx_mpsc_manager) );
     server.await.unwrap();
-    _manager.await;
+    _manager.await.unwrap();
 }
 
 async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Commande>) {
