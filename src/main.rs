@@ -55,10 +55,10 @@ impl Frame {
         
         match get_u8(buffer) {
             Some(1) => { //begin
-                println!("Begin");
+                //println!("Begin");
                 match get_str(buffer) {
                     Some(str) => {
-                        println!("get_str : {}", str);
+                        //println!("get_str : {}", str);
                         Ok(str)
                     },
                     None => {
@@ -67,7 +67,7 @@ impl Frame {
                 }
             }
             Some(3) => { //End
-                println!("End");
+                //println!("End");
                 Err("oups")
             },
             Some(n) => {
@@ -81,34 +81,6 @@ impl Frame {
     }
     
 }
-/*
-fn get_line<'a>(src: &mut Cursor<&'a [u8]>) -> Result<&'a [u8], Error> {
-    
-    let start = src.position() as usize;
-    // Scan to the second to last byte
-    let end = src.get_ref().len() - 1;
-
-    for i in start..end {
-        if src.get_ref()[i] == b'\r' && src.get_ref()[i + 1] == b'\n' {
-            // We found a line, update the position to be *after* the \n
-            src.set_position((i + 2) as u64);
-
-            // Return the line
-            return Ok(&src.get_ref()[start..i]);
-        }
-    }
-
-    Err(Error::Incomplete)
-}*/
-/*
-fn skip(src: &mut Cursor<&[u8]>, n: usize) -> Result<(), Error> {
-    if src.remaining() < n {
-        return Err(Error::Incomplete);
-    }
-
-    src.advance(n);
-    Ok(())
-}*/
 fn parse_frame(buffer : &mut dyn Buf) -> Option<Frame>{
     match Frame::check(buffer) {
         Ok(frame) => {
@@ -136,12 +108,12 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
             }
             
         }
-        println!("Buffer : {:?} ", buf);
+        //println!("Buffer : {:?} ", buf);
         stream.readable().await;
         match stream.try_read_buf(&mut buf) {
             Ok(0) => break,
             Ok(n) => {
-                println!("read {} bytes", n);
+                //println!("read {} bytes", n);
             }
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
                 continue;
