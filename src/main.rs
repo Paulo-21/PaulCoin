@@ -4,8 +4,9 @@ use std::fs::File;
 use std::io::prelude::*;
 use tokio::sync::{ mpsc };
 use std::io;
-use bytes::{BytesMut, BufMut, Buf};
+use bytes::{BytesMut, Buf};
 use std::env;
+use console_subscriber;
 //use std::net::SocketAddr;
 
 #[derive(Debug)]
@@ -156,8 +157,8 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
 
 async fn process_receive(msg : &[u8], tx_mpsc_manager : mpsc::Sender<Commande>) {
     let str = String::from_utf8_lossy(msg);
-    println!("Process msg : {}", str);
-    //tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
+    //println!("Process msg : {}", str);
+    tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
 }
 async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
     let mut writers: Vec<mpsc::Sender<Commande>> = Vec::new();
@@ -215,6 +216,7 @@ async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>) {
 }
 #[tokio::main]
 async fn main() {
+    console_subscriber::init();
     let arg = env::args().last();
     
     let (tx_mpsc_manager ,  rx_mpsc_manager) : (mpsc::Sender<Commande>, mpsc::Receiver<Commande>) = mpsc::channel(32);
@@ -246,8 +248,8 @@ async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Commande>,
     match TcpStream::connect(&ip[..]).await {
         Ok(stream) => {
             
-            /*println!("{}, {}", stream.local_addr().unwrap().ip() , stream.peer_addr().unwrap().ip() );
-            if stream.local_addr().unwrap().ip() == stream.peer_addr().unwrap().ip() {
+            println!("{}, {}", stream.local_addr().unwrap().ip() , stream.peer_addr().unwrap().ip() );
+            /*if stream.local_addr().unwrap().ip() == stream.peer_addr().unwrap().ip() {
                 return;
             }*/
             if message.is_some() {
@@ -277,5 +279,5 @@ async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Commande>,
         }
         Err(err) => { println!("{}", err); }
     }
-    println!("client destroyed");
+    //println!("client destroyed");
 }
