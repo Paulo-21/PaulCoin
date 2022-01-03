@@ -6,7 +6,7 @@ use tokio::sync::{ mpsc };
 use std::io;
 use bytes::{BytesMut, Buf};
 use std::env;
-use console_subscriber;
+//use console_subscriber;
 //use std::net::SocketAddr;
 
 #[derive(Debug)]
@@ -216,7 +216,7 @@ async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>) {
 }
 #[tokio::main]
 async fn main() {
-    console_subscriber::init();
+    //console_subscriber::init();
     let arg = env::args().last();
     
     let (tx_mpsc_manager ,  rx_mpsc_manager) : (mpsc::Sender<Commande>, mpsc::Receiver<Commande>) = mpsc::channel(32);
