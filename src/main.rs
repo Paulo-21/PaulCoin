@@ -1,4 +1,3 @@
-
 use std::fs::File;
 use std::io::prelude::*;
 use tokio::sync::{ mpsc };
@@ -17,7 +16,7 @@ async fn main() {
     let mut file = File::open("votant.txt").unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
-    println!("{}", contents);
+    //println!("{}", contents);
     let clients = contents.split(' ').collect::<Vec<_>>();
     
     let _manager = tokio::spawn(async move{

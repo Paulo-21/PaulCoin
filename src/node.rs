@@ -103,13 +103,13 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
         stream.readable().await;
         match stream.try_read_buf(&mut buf) {
             Ok(0) => break,
-            Ok(n) => {
+            Ok(_n) => {
                 //println!("read {} bytes", n);
             }
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
                 continue;
             }
-            Err(e) => { return ; }
+            Err(_e) => { return ; }
         }
     }
 }
@@ -126,7 +126,7 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
                     stream.writable().await;
 
                     match stream.try_write(&data) {
-                        Ok(n) => { break; }
+                        Ok(_n) => { break; }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }
                         Err(e) => {
                             println!("{}", e);
@@ -156,15 +156,12 @@ pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
             Send { value } => {
                 for tx in &writers {
                     let v = value.clone();
-                    tx.send(Commande::Send{value : v}).await;
+                    //tx.send(Commande::Send{value : v}).await;
                 }
             },
             AddStream { writer_stream } => {
                 writers.push(writer_stream);
-            }
-            _ => {
-                continue;
-            }
+            },
         }
     }
 }
@@ -221,7 +218,7 @@ pub async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Comman
                 loop {
                     stream.writable().await;
                     match stream.try_write(&data) {
-                        Ok(n) => { break; }
+                        Ok(_n) => { break; }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }
                         Err(e) => {
                             println!("Error : {}", e);
