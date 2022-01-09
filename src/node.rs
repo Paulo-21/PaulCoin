@@ -10,7 +10,6 @@ pub enum Commande {
     AddStream {
         writer_stream : mpsc::Sender<Commande>
     }
-    
 }
 enum Frame {
     Message(String),
@@ -21,7 +20,6 @@ fn get_u8(buffer : &mut dyn Buf) -> Option<u8> {
     }
     let ret = buffer.chunk()[0];
     Some(ret)
-    
 }
 fn get_str (buffer : &mut dyn Buf) -> Option<Vec<u8>> {
     let mut i = 0;
@@ -51,7 +49,7 @@ fn parse_frame(buffer : &mut dyn Buf) -> Option<Frame>{
                     return Some(Frame::Message(a));
                 }
             }
-            Some(n) => {
+            Some(_n) => {
                 buffer.advance(1);
             },
             None  => { }
