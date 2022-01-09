@@ -44,60 +44,29 @@ fn get_str (buffer : &mut dyn Buf) -> Option<String> {
     }
     None
 }
-impl Frame {
-    fn check(buffer : &mut dyn Buf) -> Result<String, &str>{
-        
-        match get_u8(buffer) {
-            Some(1) => { //begin
-                //println!("Begin");
-                match get_str(buffer) {
-                    Some(str) => {
-                        //println!("get_str : {}", str);
-                        Ok(str)
-                    },
-                    None => {
-                        Err("nothing")
-                    }
+fn parse_frame(buffer : &mut dyn Buf) -> Option<Frame>{
+    match get_u8(buffer) {
+            Some(1) => {
+                if let Some(str) = get_str(buffer) {
+                    return Some(Frame::Message(str));
                 }
             }
-            Some(3) => { //End
-                //println!("End");
-                Err("oups")
-            },
             Some(n) => {
-                println!("get_u8 {}", n);
-                Err("dinguerie")
-            }
-            None  => {
-                Err("nothing")
-            }
+                buffer.advance(1);
+            },
+            None  => { }
         }
-    }
-    
-}
-fn parse_frame(buffer : &mut dyn Buf) -> Option<Frame>{
-    match Frame::check(buffer) {
-        Ok(frame) => {
-            Some(Frame::Message(frame))
-        }
-        Err(e) => { None }
-    }
+        None
 }
 async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Commande>) {
     let mut buf = BytesMut::with_capacity(1024);
     
     loop {
-        match parse_frame(&mut buf) {
-            Some(Frame::Message(message)) => {
+        if let Some(Frame::Message(message)) = parse_frame(&mut buf) {
                 let cloned = tx_mpsc_manager.clone();
                 tokio::spawn(async move {
                     process_receive(message.as_bytes(), cloned).await;
-                });
-            }
-            None => {
-
-            }
-            
+                });           
         }
         //println!("Buffer : {:?} ", buf);
         stream.readable().await;
@@ -145,7 +114,7 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
 
 async fn process_receive(msg : &[u8], tx_mpsc_manager : mpsc::Sender<Commande>) {
     let str = String::from_utf8_lossy(msg);
-    //println!("Process msg : {}", str);
+    println!("Receive msg : {}", str);
     tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
 }
 pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
