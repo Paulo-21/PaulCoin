@@ -23,12 +23,10 @@ fn get_u8(buffer : &mut dyn Buf) -> Option<u8> {
     Some(ret)
     
 }
-fn get_str (buffer : &mut dyn Buf) -> Option<String> {
+fn get_str (buffer : &mut dyn Buf) -> Option<Vec<u8>> {
     let mut i = 0;
-    let mut flag = false;
-    let mut a = String::new(); 
+    let mut flag = false; 
     for x in buffer.chunk() {
-        a.push(*x as char);
         if *x == 3 {
             flag = true;
             break;
@@ -37,10 +35,11 @@ fn get_str (buffer : &mut dyn Buf) -> Option<String> {
     }
     
     if flag {
-        a.remove(0);
-        a.pop();
-        buffer.advance(i+1);
-        return Some(a);
+        let mut dst = vec![0;i-1];
+        buffer.advance(1);
+        buffer.copy_to_slice(&mut dst);
+        buffer.advance(1);
+        return Some(dst);
     }
     None
 }
@@ -48,7 +47,8 @@ fn parse_frame(buffer : &mut dyn Buf) -> Option<Frame>{
     match get_u8(buffer) {
             Some(1) => {
                 if let Some(str) = get_str(buffer) {
-                    return Some(Frame::Message(str));
+                    let a = String::from_utf8(str).unwrap();
+                    return Some(Frame::Message(a));
                 }
             }
             Some(n) => {
