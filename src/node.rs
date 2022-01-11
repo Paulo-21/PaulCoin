@@ -28,13 +28,11 @@ fn get_u8(buffer : &mut BufferParsing) -> Option<u8> {
 }
 fn get_str (buffer : &mut BufferParsing) -> Option<Vec<u8>> {
      let iter = buffer.buf.chunk();
-     println!("{:?}", buffer.buf);
     loop {
         if buffer.cursor == iter.len() {
             return None;
         }
         if iter[buffer.cursor] == 3 {
-            println!("buffer cursor {}", buffer.cursor);
             let mut dst = vec![0;buffer.cursor];
             buffer.buf.copy_to_slice(&mut dst);
             buffer.buf.advance(1);
