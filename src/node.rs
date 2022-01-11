@@ -2,6 +2,7 @@ use tokio::net::{ TcpListener, TcpStream, tcp::OwnedReadHalf, tcp::OwnedWriteHal
 use tokio::sync::{ mpsc };
 use std::io;
 use bytes::{BytesMut, Buf};
+
 #[derive(Debug)]
 pub enum Commande {
     Send {
@@ -14,68 +15,68 @@ pub enum Commande {
 enum Frame {
     Message(String),
 }
-fn get_u8(buffer : &mut dyn Buf) -> Option<u8> {
-    if !buffer.has_remaining() {
+struct BufferParsing {
+    buf : BytesMut,
+    cursor : usize
+}
+fn get_u8(buffer : &mut BufferParsing) -> Option<u8> {
+    if !buffer.buf.has_remaining() {
         return None;
     }
-    let ret = buffer.chunk()[0];
+    let ret = buffer.buf.chunk()[buffer.cursor];
     Some(ret)
 }
-fn get_str (buffer : &mut dyn Buf) -> Option<Vec<u8>> {
-    let mut i = 0;
-    let mut flag = false; 
-    for x in buffer.chunk() {
-        if *x == 3 {
-            flag = true;
-            break;
+fn get_str (buffer : &mut BufferParsing) -> Option<Vec<u8>> {
+     let iter = buffer.buf.chunk();
+     println!("{:?}", buffer.buf);
+    loop {
+        if buffer.cursor == iter.len() {
+            return None;
         }
-        i+=1;
+        if iter[buffer.cursor] == 3 {
+            println!("buffer cursor {}", buffer.cursor);
+            let mut dst = vec![0;buffer.cursor];
+            buffer.buf.copy_to_slice(&mut dst);
+            buffer.buf.advance(1);
+            buffer.cursor = 0;
+            return Some(dst);
+        }
+        buffer.cursor += 1;
     }
-    
-    if flag {
-        let mut dst = vec![0;i-1];
-        buffer.advance(1);
-        buffer.copy_to_slice(&mut dst);
-        buffer.advance(1);
-        return Some(dst);
-    }
-    None
 }
-fn parse_frame(buffer : &mut dyn Buf) -> Option<Frame>{
+fn parse_frame(buffer : &mut BufferParsing) -> Option<Frame>{
     match get_u8(buffer) {
-            Some(1) => {
+            Some(3) => {
                 if let Some(str) = get_str(buffer) {
                     let a = String::from_utf8(str).unwrap();
                     return Some(Frame::Message(a));
                 }
             }
             Some(_n) => {
-                buffer.advance(1);
+                if let Some(str) = get_str(buffer) {
+                    let a = String::from_utf8(str).unwrap();
+                    return Some(Frame::Message(a));
+                }
             },
             None  => { }
         }
         None
 }
 async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Commande>) {
-    let mut buf = BytesMut::with_capacity(1024);
+    let mut buffer = BufferParsing { buf : BytesMut::with_capacity(1024) , cursor : 0};
     
     loop {
-        if let Some(Frame::Message(message)) = parse_frame(&mut buf) {
+        if let Some(Frame::Message(message)) = parse_frame(&mut buffer) {
                 let cloned = tx_mpsc_manager.clone();
                 tokio::spawn(async move {
                     process_receive(message.as_bytes(), cloned).await;
-                });           
+                });
         }
-        //println!("Buffer : {:?} ", buf);
         stream.readable().await;
-        match stream.try_read_buf(&mut buf) {
+        match stream.try_read_buf(&mut buffer.buf) {
             Ok(0) => break,
-            Ok(_n) => {
-                //println!("read {} bytes", n);
-            }
-            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-                continue;
-            }
+            Ok(_n) => { }
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }
             Err(_e) => { return ; }
         }
     }
@@ -86,9 +87,7 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
         match cmd {
             Send { value } => {
                 loop {
-                    let mut data = vec![1];
-                    let vec = value.as_bytes();
-                    data.extend(vec);
+                    let mut data = value.clone().into_bytes();
                     data.extend([3]);
                     stream.writable().await;
 
@@ -177,11 +176,9 @@ pub async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Comman
             }*/
             if message.is_some() {
                 let a = message.unwrap();
-                let mut data = vec![1];
-                let vec = a.as_bytes();
-                data.extend(vec);
-                data.extend([3]);
                 println!("client : {}", a);
+                let mut data = a.into_bytes();
+                data.extend([3]);
                 loop {
                     stream.writable().await;
                     match stream.try_write(&data) {
