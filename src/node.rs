@@ -23,8 +23,7 @@ fn get_u8(buffer : &mut BufferParsing) -> Option<u8> {
     if !buffer.buf.has_remaining() {
         return None;
     }
-    let ret = buffer.buf.chunk()[buffer.cursor];
-    Some(ret)
+    Some(buffer.buf.chunk()[buffer.cursor])
 }
 fn get_str (buffer : &mut BufferParsing) -> Option<Vec<u8>> {
      let iter = buffer.buf.chunk();
@@ -43,20 +42,11 @@ fn get_str (buffer : &mut BufferParsing) -> Option<Vec<u8>> {
     }
 }
 fn parse_frame(buffer : &mut BufferParsing) -> Option<Frame>{
-    match get_u8(buffer) {
-            Some(3) => {
-                if let Some(str) = get_str(buffer) {
-                    let a = String::from_utf8(str).unwrap();
-                    return Some(Frame::Message(a));
-                }
+    if let Some(_n) = get_u8(buffer) {
+            if let Some(str) = get_str(buffer) {
+                let a = String::from_utf8(str).unwrap();
+                return Some(Frame::Message(a));
             }
-            Some(_n) => {
-                if let Some(str) = get_str(buffer) {
-                    let a = String::from_utf8(str).unwrap();
-                    return Some(Frame::Message(a));
-                }
-            },
-            None  => { }
         }
         None
 }
@@ -88,7 +78,6 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
                     let mut data = value.clone().into_bytes();
                     data.extend([3]);
                     stream.writable().await;
-
                     match stream.try_write(&data) {
                         Ok(_n) => { break; }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }
@@ -167,7 +156,6 @@ pub async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Comman
     ip.push_str(":80");
     match TcpStream::connect(&ip[..]).await {
         Ok(stream) => {
-            
             println!("{}, {}", stream.local_addr().unwrap().ip() , stream.peer_addr().unwrap().ip() );
             /*if stream.local_addr().unwrap().ip() == stream.peer_addr().unwrap().ip() {
                 return;
@@ -197,5 +185,4 @@ pub async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Comman
         }
         Err(err) => { println!("{}", err); }
     }
-    //println!("client destroyed");
 }

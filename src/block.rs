@@ -1,4 +1,4 @@
-use ring;
+
 #[derive(Clone)]
 struct Transaction {
     sender_addr : Vec<u8>,
@@ -16,7 +16,7 @@ impl Block<'_> {
     fn hash_block(&self) -> ring::digest::Digest {
         let mut content = Vec::new();
         content.extend(self.previous_hash_block.clone() );
-        for (elem) in &self.transaction {
+        for elem in &self.transaction {
             content.extend(elem.sender_addr.clone());
         }
         content.extend([self.difficulty]);
