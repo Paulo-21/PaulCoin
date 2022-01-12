@@ -16,10 +16,21 @@ pub async fn init() {
     for db_name in client.list_database_names(None, None).await {
         println!("{:?}", db_name);
     }
-    let db = client.database("mydb");
+    let db = client.database("PaulCoin");
 
     // List the names of the collections in that database.
     for collection_name in db.list_collection_names(None).await {
         println!("{:?}", collection_name);
     }
+    // Get a handle to a collection in the database.
+    let collection = db.collection::<Document>("books");
+
+    let docs = vec![
+        doc! { "title": "1984", "author": "George Orwell" },
+        doc! { "title": "Animal Farm", "author": "George Orwell" },
+        doc! { "title": "The Great Gatsby", "author": "F. Scott Fitzgerald" },
+    ];
+
+    // Insert some documents into the "mydb.books" collection.
+    collection.insert_many(docs, None).await.unwrap();
 }
