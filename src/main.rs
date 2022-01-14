@@ -2,7 +2,6 @@ use std::fs::File;
 use std::io::prelude::*;
 use tokio::sync::{ mpsc };
 use std::env;
-use std::collections::BTreeMap;
 //use console_subscriber;
 //use std::net::SocketAddr;
 mod block;
@@ -11,7 +10,6 @@ mod node;
 async fn main() {
     //console_subscriber::init();
     let arg = env::args().last();
-    let mut blockchain : BTreeMap<Vec<u8>, block::Block> = BTreeMap::new();
     let (tx_mpsc_manager ,  rx_mpsc_manager) : (mpsc::Sender<node::Commande>, mpsc::Receiver<node::Commande>) = mpsc::channel(32);
     let mut file = File::open("votant.txt").unwrap();
     let mut contents = String::new();

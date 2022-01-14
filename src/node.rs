@@ -109,7 +109,7 @@ pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
             Send { value } => {
                 for tx in &writers {
                     let v = value.clone();
-                    //tx.send(Commande::Send{value : v}).await;
+                    tx.send(Commande::Send{value : v}).await;
                 }
             },
             AddStream { writer_stream } => {
