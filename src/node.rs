@@ -54,20 +54,22 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
     let mut buffer = BufferParsing { buf : BytesMut::with_capacity(1024) , cursor : 0};
     
     loop {
-        /*if let Some(Frame::Message(message)) = parse_frame(&mut buffer) {
+        if let Some(Frame::Message(message)) = parse_frame(&mut buffer) {
                 let cloned = tx_mpsc_manager.clone();
                 tokio::spawn(async move {
                     process_receive(message.as_bytes(), cloned).await;
                 });
-        }*/
+        }
         stream.readable().await;
         match stream.try_read_buf(&mut buffer.buf) {
             Ok(0) => break,
             Ok(_n) => { 
+                /*
                 let mut dst = vec![0;buffer.buf.len()];
                 buffer.buf.copy_to_slice(&mut dst);
                 let a = String::from_utf8(dst).unwrap();
                 println!("{}", a);
+                */
             }
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }
             Err(_e) => { return ; }
