@@ -167,6 +167,7 @@ pub async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Comman
             if stream.local_addr().unwrap().ip() == stream.peer_addr().unwrap().ip() {
                 return;
             }
+            
             if message.is_some() {
                 let a = message.unwrap();
                 println!("client : {}", a);
