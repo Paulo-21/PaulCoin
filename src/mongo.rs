@@ -37,7 +37,7 @@ pub async fn init() {
     let docs = vec![
         doc! { 
             "transaction": "123",
-            "author": "Paul Cibier",
+            "Sender": "Paul Cibier",
             "Receiver" : "Remyx",
             "previous_block": "000000000000000000000000000000000",
             "hash_block" : "287Y87Y8Y8Y88T7TT8TUUGYGGHGHGHJGJ"
