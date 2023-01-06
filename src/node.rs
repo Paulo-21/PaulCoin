@@ -105,8 +105,10 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
 
 async fn process_receive(msg : &[u8], tx_mpsc_manager : mpsc::Sender<Commande>) {
     let str = String::from_utf8_lossy(msg);
-    println!("Receive msg : {}", str);
+    let str2 = String::from_utf8_lossy(msg);
+    //println!("Receive msg : {}", str);
     tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
+    tx_mpsc_manager.send(Commande::Send{value : String::from(str2)}).await;
 }
 pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
     let mut writers: Vec<mpsc::Sender<Commande>> = Vec::new();
@@ -116,7 +118,7 @@ pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
             Send { value } => {
                 for tx in &writers {
                     let v = value.clone();
-                    //tx.send(Commande::Send{value : v}).await;
+                    tx.send(Commande::Send{value : v}).await;
                 }
             },
             AddStream { writer_stream } => {
