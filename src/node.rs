@@ -42,12 +42,12 @@ fn get_str (buffer : &mut BufferParsing) -> Option<Vec<u8>> {
     }
 }
 fn parse_frame(buffer : &mut BufferParsing) -> Option<Frame>{
-    if let Some(_n) = get_u8(buffer) {
+    //if let Some(_n) = get_u8(buffer) {
             if let Some(str) = get_str(buffer) {
                 let a = String::from_utf8(str).unwrap();
                 return Some(Frame::Message(a));
             }
-        }
+        //}
         None
 }
 async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Commande>) {
