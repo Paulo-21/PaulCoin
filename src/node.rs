@@ -19,7 +19,7 @@ struct BufferParsing {
     buf : BytesMut,
     cursor : usize
 }
-fn get_u8(buffer : &mut BufferParsing) -> Option<u8> {
+fn _get_u8(buffer : &mut BufferParsing) -> Option<u8> {
     if !buffer.buf.has_remaining() {
         return None;
     }
@@ -60,7 +60,7 @@ async fn stream_reader(stream : OwnedReadHalf, tx_mpsc_manager: mpsc::Sender<Com
                     process_receive(message.as_bytes(), cloned).await;
                 });
         }
-        stream.readable().await;
+        let _ = stream.readable().await;
         match stream.try_read_buf(&mut buffer.buf) {
             Ok(0) => break,
             Ok(_n) => { 
@@ -84,7 +84,7 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
                 loop {
                     let mut data = value.clone().into_bytes();
                     data.extend([3]);
-                    stream.writable().await;
+                    let _ = stream.writable().await;
                     match stream.try_write(&data) {
                         Ok(_n) => { break; }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }
@@ -106,7 +106,7 @@ async fn stream_writer(stream : OwnedWriteHalf, mut rx : mpsc::Receiver<Commande
 async fn process_receive(msg : &[u8], tx_mpsc_manager : mpsc::Sender<Commande>) {
     let str = String::from_utf8_lossy(msg);
     println!("Receive msg : {}", str);
-    tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
+    let _ = tx_mpsc_manager.send(Commande::Send{value : String::from(str)}).await;
 }
 pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
     let mut writers: Vec<mpsc::Sender<Commande>> = Vec::new();
@@ -114,9 +114,9 @@ pub async fn manager ( mut rx_server: mpsc::Receiver<Commande>) {
         use Commande::*;
         match cmd {
             Send { value } => {
-                for tx in &writers {
-                    let v = value.clone();
-                    //tx.send(Commande::Send{value : v}).await;
+                for _tx in &writers {
+                    let _v = value.clone();
+                    //_tx.send(Commande::Send{value : _v}).await;
                 }
             },
             AddStream { writer_stream } => {
@@ -137,7 +137,7 @@ pub async fn process_new_connection (stream : TcpStream, tx_mpsc_manager: mpsc::
         stream_reader(reader, tx_mpsc_manager_clone).await;
     });
 
-    tx_mpsc_manager.send(Commande::AddStream{writer_stream : tx}).await;
+    let _ = tx_mpsc_manager.send(Commande::AddStream{writer_stream : tx}).await;
 }
 
 pub async fn start_server(tx_mpsc_manager: mpsc::Sender<Commande>) {
@@ -174,7 +174,7 @@ pub async fn start_client(mut ip : String, tx_mpsc_manager : mpsc::Sender<Comman
                 let mut data = a.into_bytes();
                 data.extend([3]);
                 loop {
-                    stream.writable().await;
+                    let _ = stream.writable().await;
                     match stream.try_write(&data) {
                         Ok(_n) => { break; }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => { continue; }

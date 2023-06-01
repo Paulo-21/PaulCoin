@@ -21,7 +21,7 @@ impl Block<'_> {
         }
         content.extend([self.difficulty]);
         content.extend([self.nonce]);
-        let digest  = ring::digest::digest(&ring::digest::SHA256, &(*content));
+        let digest  = ring::digest::digest(&ring::digest::SHA256, &content);
         println!("{:?}", digest);
         digest
     }
