@@ -8,5 +8,9 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1", features = ["full"] } #, "tracing"
 bytes = "1"
-ring = "0.16"
+ring = "0.17"
 #console-subscriber = "0.1.0"
+
+
+[lints.rust]
+dead_code = "allow"
