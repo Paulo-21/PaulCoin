@@ -1,4 +1,5 @@
-
+use blake3::Hash;
+use blake3::Hasher;
 #[derive(Clone)]
 struct Transaction {
     sender_addr : Vec<u8>,
@@ -13,7 +14,8 @@ pub struct Block<'a> {
     hash : &'a[u8],
 }
 impl Block<'_> {
-    fn hash_block(&self) -> ring::digest::Digest {
+    //fn hash_block(&self) -> ring::digest::Digest {
+    fn hash_block(&self) -> Hash {
         let mut content = Vec::new();
         content.extend(self.previous_hash_block.clone() );
         for elem in &self.transaction {
@@ -21,7 +23,8 @@ impl Block<'_> {
         }
         content.extend([self.difficulty]);
         content.extend([self.nonce]);
-        let digest  = ring::digest::digest(&ring::digest::SHA256, &content);
+        let digest = blake3::hash(&content);
+        //let digest  = ring::digest::digest(&ring::digest::SHA256, &content);
         println!("{:?}", digest);
         digest
     }
