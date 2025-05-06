@@ -9,7 +9,7 @@ edition = "2021"
 tokio = { version = "1", features = ["full"] } #, "tracing"
 bytes = "1"
 ring = "0.17"
-blake3 = "1.5"
+blake3 = "1.8"
 #console-subscriber = "0.1.0"
 
 
